@@ -305,9 +305,24 @@ class QuestionProcessor:
                     # Skip already classified questions
                     continue
                 
+                # Build the full question with options
+                full_question = str(question_text).strip()
+                
+                # Add options if they exist
+                options = []
+                for opt in ['A', 'B', 'C', 'D', 'E']:
+                    opt_col = f'Option {opt}'
+                    if opt_col in df.columns and pd.notna(df.iloc[i][opt_col]):
+                        option_text = str(df.iloc[i][opt_col]).strip()
+                        if option_text:
+                            options.append(f"{opt}) {option_text}")
+                
+                if options:
+                    full_question += "\n\nOptions:\n" + "\n".join(options)
+                
                 batch.append({
                     'index': i,
-                    'question': str(question_text).strip()[:self.validation_config["max_question_length"]]
+                    'question': full_question[:self.validation_config["max_question_length"]]
                 })
         
         return batch

@@ -894,12 +894,6 @@
     "Full_Path": "WORLD PHYSICAL GEOGRAPHY > OCEANIA > Geography of Oceania"
   },
   {
-    "Subject": "WORLD PHYSICAL GEOGRAPHY",
-    "Topic": "MISCELLANEOUS",
-    "Subtopic": "MISCELLANEOUS",
-    "Full_Path": "WORLD PHYSICAL GEOGRAPHY > MISCELLANEOUS > MISCELLANEOUS"
-  },
-  {
     "Subject": "INDIAN PHYSICAL GEOGRAPHY",
     "Topic": "PHYSIOGRAPHY",
     "Subtopic": "Basics About India’s Physiography",
@@ -1156,12 +1150,6 @@
     "Topic": "NATURAL HAZARDS & DISASTERS",
     "Subtopic": "Thuderstorms In India",
     "Full_Path": "INDIAN PHYSICAL GEOGRAPHY > NATURAL HAZARDS & DISASTERS > Thuderstorms In India"
-  },
-  {
-    "Subject": "INDIAN PHYSICAL GEOGRAPHY",
-    "Topic": "MISCELLANEOUS",
-    "Subtopic": "MISCELLANEOUS",
-    "Full_Path": "INDIAN PHYSICAL GEOGRAPHY > MISCELLANEOUS > MISCELLANEOUS"
   },
   {
     "Subject": "INDIAN SOCIO-ECONOMIC GEOGRAPHY",
@@ -1452,12 +1440,6 @@
     "Full_Path": "INDIAN SOCIO-ECONOMIC GEOGRAPHY > INFRASTRUCTURE > Pipeline Infrastructure"
   },
   {
-    "Subject": "INDIAN SOCIO-ECONOMIC GEOGRAPHY",
-    "Topic": "MISCELLANEOUS",
-    "Subtopic": "MISCELLANEOUS",
-    "Full_Path": "INDIAN SOCIO-ECONOMIC GEOGRAPHY > MISCELLANEOUS > MISCELLANEOUS"
-  },
-  {
     "Subject": "WORLD SOCIO-ECONOMIC GEOGRAPHY",
     "Topic": "RESOURCE GEOGRAPHY",
     "Subtopic": "Natural Resource - An Introduction",
@@ -1558,12 +1540,6 @@
     "Topic": "SOCIAL GEOGRAPHY",
     "Subtopic": "Settlements",
     "Full_Path": "WORLD SOCIO-ECONOMIC GEOGRAPHY > SOCIAL GEOGRAPHY > Settlements"
-  },
-  {
-    "Subject": "WORLD SOCIO-ECONOMIC GEOGRAPHY",
-    "Topic": "MISCELLANEOUS",
-    "Subtopic": "MISCELLANEOUS",
-    "Full_Path": "WORLD SOCIO-ECONOMIC GEOGRAPHY > MISCELLANEOUS > MISCELLANEOUS"
   },
   {
     "Subject": "ECONOMY",
@@ -3924,12 +3900,6 @@
     "Full_Path": "SCIENCE AND TECHNOLOGY > RENEWABLE ENERGY > Miscellaneous"
   },
   {
-    "Subject": "SCIENCE AND TECHNOLOGY",
-    "Topic": "Miscellaneous",
-    "Subtopic": "Miscellaneous",
-    "Full_Path": "SCIENCE AND TECHNOLOGY > Miscellaneous > Miscellaneous"
-  },
-  {
     "Subject": "ENVIRONMENT",
     "Topic": "ENVIRONMENT AND ECOLOGY",
     "Subtopic": "Basics of Enviornment and Ecology- Some basic terminologies",
@@ -4582,12 +4552,6 @@
     "Topic": "Agriculture",
     "Subtopic": "Genetically Modified Organism",
     "Full_Path": "ENVIRONMENT > Agriculture > Genetically Modified Organism"
-  },
-  {
-    "Subject": "ENVIRONMENT",
-    "Topic": "MISCELLANEOUS",
-    "Subtopic": "MISCELLANEOUS",
-    "Full_Path": "ENVIRONMENT > MISCELLANEOUS > MISCELLANEOUS"
   },
   {
     "Subject": "ANCIENT HISTORY",
@@ -5364,12 +5328,6 @@
     "Full_Path": "ANCIENT HISTORY > EMERGENCE OF NEW DYNASTIES > PALAS, PRATIHARAS, RASHTRAKUTAS"
   },
   {
-    "Subject": "ANCIENT HISTORY",
-    "Topic": "MISCELLANEOUS",
-    "Subtopic": "MISCELLANEOUS",
-    "Full_Path": "ANCIENT HISTORY > MISCELLANEOUS > MISCELLANEOUS"
-  },
-  {
     "Subject": "MEDIEVAL HISTORY",
     "Topic": "TIMELINE",
     "Subtopic": "TIME LINE",
@@ -5644,12 +5602,6 @@
     "Topic": "RISE OF MARATHAS",
     "Subtopic": "SHIVAJI'S ADMINISTRATION",
     "Full_Path": "MEDIEVAL HISTORY > RISE OF MARATHAS > SHIVAJI'S ADMINISTRATION"
-  },
-  {
-    "Subject": "MEDIEVAL HISTORY",
-    "Topic": "MISCELLANEOUS",
-    "Subtopic": "MISCELLANEOUS",
-    "Full_Path": "MEDIEVAL HISTORY > MISCELLANEOUS > MISCELLANEOUS"
   },
   {
     "Subject": "MEDIEVAL HISTORY",
@@ -6418,12 +6370,6 @@
     "Topic": "IMPORTANT PERSONALITIES",
     "Subtopic": "CONTRIBUTION OF WOMEN",
     "Full_Path": "MODERN INDIA > IMPORTANT PERSONALITIES > CONTRIBUTION OF WOMEN"
-  },
-  {
-    "Subject": "MODERN INDIA",
-    "Topic": "MISCELLANEOUS",
-    "Subtopic": "MISCELLANEOUS",
-    "Full_Path": "MODERN INDIA > MISCELLANEOUS > MISCELLANEOUS"
   },
   {
     "Subject": "ART AND CULTURE",
@@ -7873,30 +7819,6 @@
   },
   {
     "Subject": "POLITY",
-    "Topic": "Miscellaneous",
-    "Subtopic": "Important Constituional Amendments",
-    "Full_Path": "POLITY > Miscellaneous > Important Constituional Amendments"
-  },
-  {
-    "Subject": "POLITY",
-    "Topic": "Miscellaneous",
-    "Subtopic": "Miscellaneous",
-    "Full_Path": "POLITY > Miscellaneous > Miscellaneous"
-  },
-  {
-    "Subject": "POLITY",
-    "Topic": "Miscellaneous",
-    "Subtopic": "Flag Code",
-    "Full_Path": "POLITY > Miscellaneous > Flag Code"
-  },
-  {
-    "Subject": "POLITY",
-    "Topic": "Miscellaneous",
-    "Subtopic": "Comparison of Constitution",
-    "Full_Path": "POLITY > Miscellaneous > Comparison of Constitution"
-  },
-  {
-    "Subject": "POLITY",
     "Topic": "PUBLIC POLICY",
     "Subtopic": "Education",
     "Full_Path": "POLITY > PUBLIC POLICY > Education"
@@ -7926,12 +7848,6 @@
     "Full_Path": "GOVERNANCE > Citizen Charter > Citizen Charter"
   },
   {
-    "Subject": "GOVERNANCE",
-    "Topic": "Miscellaneous",
-    "Subtopic": "Miscellaneous",
-    "Full_Path": "GOVERNANCE > Miscellaneous > Miscellaneous"
-  },
-  {
     "Subject": "INTERNATIONAL BODIES & ORGANISATIONS",
     "Topic": "UN ORGANISATIONS",
     "Subtopic": "UN ORGANISATIONS",
@@ -7942,12 +7858,6 @@
     "Topic": "REGIONAL & MULTILATERAL GROUPINGS",
     "Subtopic": "REGIONAL & MULTILATERAL GROUPINGS",
     "Full_Path": "INTERNATIONAL BODIES & ORGANISATIONS > REGIONAL & MULTILATERAL GROUPINGS > REGIONAL & MULTILATERAL GROUPINGS"
-  },
-  {
-    "Subject": "INTERNATIONAL BODIES & ORGANISATIONS",
-    "Topic": "Miscellaneous",
-    "Subtopic": "Miscellaneous",
-    "Full_Path": "INTERNATIONAL BODIES & ORGANISATIONS > Miscellaneous > Miscellaneous"
   },
   {
     "Subject": "Reasoning",
@@ -8380,18 +8290,6 @@
     "Topic": "Odd one out",
     "Subtopic": "Odd one out",
     "Full_Path": "Reasoning > Odd one out > Odd one out"
-  },
-  {
-    "Subject": "Reasoning",
-    "Topic": "Miscellaneous",
-    "Subtopic": "Next series",
-    "Full_Path": "Reasoning > Miscellaneous > Next series"
-  },
-  {
-    "Subject": "Reasoning",
-    "Topic": "Miscellaneous",
-    "Subtopic": "Miscellaneous",
-    "Full_Path": "Reasoning > Miscellaneous > Miscellaneous"
   },
   {
     "Subject": "Reasoning",
@@ -8968,12 +8866,6 @@
     "Topic": "Probability",
     "Subtopic": "Double filler question",
     "Full_Path": "Aptitude > Probability > Double filler question"
-  },
-  {
-    "Subject": "Aptitude",
-    "Topic": "Miscellaneous",
-    "Subtopic": "Miscellaneous",
-    "Full_Path": "Aptitude > Miscellaneous > Miscellaneous"
   },
   {
     "Subject": "English",

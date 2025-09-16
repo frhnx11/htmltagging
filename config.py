@@ -8,7 +8,7 @@ import os
 # Ollama Configuration - Using 20B+ model for maximum power
 OLLAMA_CONFIG = {
     "host": "http://localhost:11434",  # Default Ollama host
-    "model": "llama3.1:8b",  # 8B parameter model
+    "model": "gemma2:9b",  # 9B parameter model
     "timeout": 120,  # 2 minutes timeout for 8B model
     "temperature": 0.02,  # Ultra-low temperature for maximum consistency
     "top_p": 0.7,  # More focused responses
@@ -80,7 +80,7 @@ PERFORMANCE_CONFIG = {
 SUBJECT_CLASSIFICATION_PROMPT = """
 You are an educational content classifier. Your task is to classify questions into the correct SUBJECT ONLY.
 
-QUESTION TO CLASSIFY:
+QUESTION TO CLASSIFY (including answer options when available):
 {question}
 
 AVAILABLE SUBJECTS (choose exactly one):\n1. ANCIENT HISTORY - Historical events and periods\n2. ART AND CULTURE - Arts, literature, cultural traditions\n3. Aptitude - General topics in this domain\n4. ECONOMY - Economics, finance, mathematics, statistics\n5. ENVIRONMENT - Environmental issues, ecology\n6. English - General topics in this domain\n7. GOVERNANCE - Government, politics, administration\n8. INDIAN PHYSICAL GEOGRAPHY - Physical or socio-economic geography\n9. INDIAN SOCIO-ECONOMIC GEOGRAPHY - Physical or socio-economic geography\n10. INTERNATIONAL BODIES & ORGANISATIONS - General topics in this domain\n11. MEDIEVAL HISTORY - Historical events and periods\n12. MODERN INDIA - General topics in this domain\n13. POLITY - Government, politics, administration\n14. Reasoning - General topics in this domain\n15. SCIENCE AND TECHNOLOGY - Science, technology, innovations\n16. WORLD PHYSICAL GEOGRAPHY - Physical or socio-economic geography\n17. WORLD SOCIO-ECONOMIC GEOGRAPHY - Physical or socio-economic geography\n\nCLASSIFICATION GUIDE:
@@ -92,6 +92,7 @@ AVAILABLE SUBJECTS (choose exactly one):\n1. ANCIENT HISTORY - Historical events
 - Historical events → ANCIENT HISTORY/MEDIEVAL HISTORY/MODERN INDIA
 - Government/Politics → POLITY
 - Science concepts → SCIENCE AND TECHNOLOGY
+- Use the answer options to understand the question's domain and context
 
 REQUIRED OUTPUT FORMAT (JSON only):
 {{
@@ -111,7 +112,7 @@ You are an educational content classifier. You have already determined the SUBJE
 
 Now classify this question into the correct TOPIC within that subject.
 
-QUESTION TO CLASSIFY:
+QUESTION TO CLASSIFY (including answer options when available):
 {question}
 
 AVAILABLE TOPICS for {subject}:
@@ -139,7 +140,7 @@ You are an educational content classifier. You have already determined:
 
 Now classify this question into the correct SUBTOPIC within that topic.
 
-QUESTION TO CLASSIFY:
+QUESTION TO CLASSIFY (including answer options when available):
 {question}
 
 AVAILABLE SUBTOPICS for {subject} > {topic}:
