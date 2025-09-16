@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
-Extract questions from HTML file and save to Excel
+Extract questions from multiple HTML files and save to a single Excel file
+Processes all HTML files in the input folder
 """
 
 from bs4 import BeautifulSoup
@@ -8,6 +9,9 @@ import pandas as pd
 import re
 import sys
 import os
+import glob
+from datetime import datetime
+import traceback
 
 def clean_text(text):
     """Clean HTML text by removing extra spaces and special characters"""
@@ -176,15 +180,13 @@ def extract_explanations(soup):
     
     return explanations
 
-
-
 def process_cell_with_images(worksheet, row_idx, col_idx, text, temp_dir):
     """Process a cell that may contain formula images"""
     # Simply set the text with formula URLs in the cell
     cell = worksheet.cell(row=row_idx, column=col_idx)
     cell.value = text
 
-def extract_questions_from_html(html_file_path):
+def extract_questions_from_html(html_file_path, file_name, global_serial_no):
     """Extract questions and options from HTML file"""
     
     # Read the HTML file
@@ -202,7 +204,7 @@ def extract_questions_from_html(html_file_path):
     all_elements = soup.find_all('p', class_='pull-left clearfix')
     
     questions_data = []
-    serial_no = 1
+    local_serial_no = 1
     
     for block in all_elements:
         # Check if we've hit the Explanation or Answer Key section
@@ -253,9 +255,10 @@ def extract_questions_from_html(html_file_path):
             
             current = current.find_next_sibling()
         
-        # Create the data entry with empty Subject, Topic, Subtopic
+        # Create the data entry with file name and empty Subject, Topic, Subtopic
         data_entry = {
-            'S No': serial_no,
+            'S No': global_serial_no,
+            'File Name': file_name,
             'Subject': '',
             'Topic': '',
             'Subtopic': '',
@@ -267,34 +270,38 @@ def extract_questions_from_html(html_file_path):
             data_entry[f'Option {option_letter}'] = option_text
         
         # Add answer and explanation
-        answer = answer_key.get(serial_no, '')
-        explanation = explanations.get(serial_no, '')
-        
+        answer = answer_key.get(local_serial_no, '')
+        explanation = explanations.get(local_serial_no, '')
         
         data_entry['Answer'] = answer
         data_entry['Explanation'] = explanation
         
         questions_data.append(data_entry)
-        serial_no += 1
+        global_serial_no += 1
+        local_serial_no += 1
     
-    return questions_data
+    return questions_data, global_serial_no
 
-def save_to_excel(questions_data, output_file):
-    """Save questions data to Excel file with embedded formula images"""
+def save_to_excel_batch(all_questions_data, output_file):
+    """Save all questions data to Excel file"""
+    if not all_questions_data:
+        print("No questions found to save.")
+        return
+    
     # Find all unique option columns across all questions
     all_option_columns = set()
-    for data in questions_data:
+    for data in all_questions_data:
         option_columns = [col for col in data.keys() if col.startswith('Option ')]
         all_option_columns.update(option_columns)
     
     # Sort option columns alphabetically (Option A, Option B, etc.)
     sorted_option_columns = sorted(list(all_option_columns))
     
-    # Define the column order - Answer and Explanation come after option columns
-    column_order = ['S No', 'Subject', 'Topic', 'Subtopic', 'Question with Statements'] + sorted_option_columns + ['Answer', 'Explanation']
+    # Define the column order - File Name comes after S No, Answer and Explanation come after option columns
+    column_order = ['S No', 'File Name', 'Subject', 'Topic', 'Subtopic', 'Question with Statements'] + sorted_option_columns + ['Answer', 'Explanation']
     
     # Create DataFrame with specified column order
-    df = pd.DataFrame(questions_data)
+    df = pd.DataFrame(all_questions_data)
     
     # Ensure all columns exist in the DataFrame
     for col in column_order:
@@ -314,25 +321,26 @@ def save_to_excel(questions_data, output_file):
         
         # Set column widths
         worksheet.column_dimensions['A'].width = 8   # S No
-        worksheet.column_dimensions['B'].width = 15  # Subject
-        worksheet.column_dimensions['C'].width = 15  # Topic
-        worksheet.column_dimensions['D'].width = 15  # Subtopic
-        worksheet.column_dimensions['E'].width = 60  # Question with Statements
+        worksheet.column_dimensions['B'].width = 20  # File Name
+        worksheet.column_dimensions['C'].width = 15  # Subject
+        worksheet.column_dimensions['D'].width = 15  # Topic
+        worksheet.column_dimensions['E'].width = 15  # Subtopic
+        worksheet.column_dimensions['F'].width = 60  # Question with Statements
         
-        # Set width for option columns (F onwards)
+        # Set width for option columns (G onwards)
         from openpyxl.utils import get_column_letter
         for i, option_col in enumerate(sorted_option_columns):
-            col_letter = get_column_letter(6 + i)  # F is column 6
+            col_letter = get_column_letter(7 + i)  # G is column 7
             worksheet.column_dimensions[col_letter].width = 30
         
         # Set width for Answer and Explanation columns
-        answer_col = get_column_letter(6 + len(sorted_option_columns))  # After all options
-        explanation_col = get_column_letter(7 + len(sorted_option_columns))  # After answer
+        answer_col = get_column_letter(7 + len(sorted_option_columns))  # After all options
+        explanation_col = get_column_letter(8 + len(sorted_option_columns))  # After answer
         worksheet.column_dimensions[answer_col].width = 10  # Answer column
         worksheet.column_dimensions[explanation_col].width = 80  # Explanation column
         
         # Process cells with formula images
-        for row_idx, row_data in enumerate(questions_data, start=2):  # Start from row 2 (after header)
+        for row_idx, row_data in enumerate(all_questions_data, start=2):  # Start from row 2 (after header)
             for col_idx, col_name in enumerate(column_order, start=1):
                 if col_name in row_data:
                     cell_value = str(row_data[col_name])
@@ -353,43 +361,69 @@ def save_to_excel(questions_data, output_file):
     print(f"Excel file saved: {output_file}")
 
 def main():
-    # Input and output file paths
-    input_html = 'input/Page_618.html'
-    output_excel = 'output/questions_output.xlsx'
+    # Input and output file paths  
+    input_folder = 'input'  # HTML files
+    output_excel = 'output/all_questions_combined.xlsx'  # Questions without subject mapping
     
-    # Check if input file exists
-    if not os.path.exists(input_html):
-        print(f"Error: Input file not found: {input_html}")
+    # Get all HTML files in the input folder
+    html_files = glob.glob(os.path.join(input_folder, '*.html'))
+    html_files.sort()  # Sort files for consistent processing order
+    
+    if not html_files:
+        print(f"Error: No HTML files found in {input_folder}")
         sys.exit(1)
     
-    print(f"Processing HTML file: {input_html}")
+    print(f"Found {len(html_files)} HTML files to process")
     
-    # Extract questions
-    questions_data = extract_questions_from_html(input_html)
+    # Process all files
+    all_questions_data = []
+    global_serial_no = 1
+    failed_files = []
     
-    print(f"Found {len(questions_data)} questions")
+    start_time = datetime.now()
+    
+    for i, html_file in enumerate(html_files):
+        try:
+            file_name = os.path.basename(html_file)
+            print(f"\nProcessing file {i+1}/{len(html_files)}: {file_name}")
+            
+            # Extract questions from this file
+            questions_data, global_serial_no = extract_questions_from_html(html_file, file_name, global_serial_no)
+            
+            print(f"  Found {len(questions_data)} questions")
+            all_questions_data.extend(questions_data)
+            
+            # Show progress every 50 files
+            if (i + 1) % 50 == 0:
+                elapsed = (datetime.now() - start_time).total_seconds()
+                rate = (i + 1) / elapsed
+                eta = (len(html_files) - (i + 1)) / rate
+                print(f"\nProgress: {i+1}/{len(html_files)} files processed ({(i+1)/len(html_files)*100:.1f}%)")
+                print(f"Total questions so far: {len(all_questions_data)}")
+                print(f"Estimated time remaining: {eta/60:.1f} minutes")
+        
+        except Exception as e:
+            print(f"  ERROR processing {file_name}: {str(e)}")
+            failed_files.append(file_name)
+            traceback.print_exc()
+            continue
+    
+    # Summary
+    print(f"\n{'='*60}")
+    print(f"Processing complete!")
+    print(f"Total files processed: {len(html_files) - len(failed_files)}/{len(html_files)}")
+    print(f"Total questions extracted: {len(all_questions_data)}")
+    if failed_files:
+        print(f"\nFailed files ({len(failed_files)}):")
+        for f in failed_files:
+            print(f"  - {f}")
     
     # Save to Excel
-    save_to_excel(questions_data, output_excel)
+    print(f"\nSaving to Excel file...")
+    save_to_excel_batch(all_questions_data, output_excel)
     
-    # Display first few questions as sample
-    if questions_data:
-        print("\nSample of extracted questions:")
-        for i, q in enumerate(questions_data[:3]):
-            print(f"\nS No: {q['S No']}")
-            print(f"Question: {q['Question with Statements'][:100]}...")
-            # Display options
-            option_keys = [k for k in sorted(q.keys()) if k.startswith('Option ')]
-            if option_keys:
-                print("Options:")
-                for opt_key in option_keys:
-                    if q.get(opt_key):
-                        print(f"  {opt_key}: {q[opt_key][:50]}...")
-            # Display answer and explanation
-            if q.get('Answer'):
-                print(f"Answer: {q['Answer']}")
-            if q.get('Explanation'):
-                print(f"Explanation: {q['Explanation'][:100]}...")
+    total_time = (datetime.now() - start_time).total_seconds()
+    print(f"\nTotal processing time: {total_time/60:.1f} minutes")
 
 if __name__ == "__main__":
     main()
