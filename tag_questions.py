@@ -8,6 +8,7 @@ import sys
 import logging
 import argparse
 import signal
+import time
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import threading
@@ -193,6 +194,15 @@ class QuestionTagger:
             self.question_processor.progress["processed_questions"] += 1
             self.session_stats["total_processed"] += 1
             
+            # Save backup and main file every 100 questions
+            if self.session_stats["total_processed"] % 100 == 0:
+                self.logger.info(f"Saving backup and main file after {self.session_stats['total_processed']} questions...")
+                # Save main results file
+                self.question_processor.save_results(self.current_df)
+                # Save backup file
+                self.question_processor.save_results(self.current_df, backup=True)
+                self.logger.info("Main file and backup saved successfully")
+            
             # Show progress every 10 questions
             if self.session_stats["total_processed"] % 10 == 0:
                 processed = self.question_processor.progress["processed_questions"]
@@ -208,19 +218,114 @@ class QuestionTagger:
             
             # Save current results
             if self.current_df is not None:
+                # Always save main results file
                 self.question_processor.save_results(self.current_df)
                 
-                # Create backup every hour
-                current_time = datetime.now()
-                if (hasattr(self, 'last_backup') and 
-                    (current_time - self.last_backup).total_seconds() > 3600) or not hasattr(self, 'last_backup'):
-                    self.question_processor.save_results(self.current_df, backup=True)
-                    self.last_backup = current_time
+                # Create backup on every save_progress call (for error situations)
+                self.question_processor.save_results(self.current_df, backup=True)
+                self.logger.info("Emergency backup created")
             
             self.logger.info("Progress saved successfully")
             
         except Exception as e:
             self.logger.error(f"Failed to save progress: {e}")
+    
+    def perform_ollama_health_check(self):
+        """Perform health check on Ollama service"""
+        try:
+            self.logger.info("Performing Ollama health check...")
+            
+            # Check if Ollama is responsive
+            if not self.ollama_client.check_ollama_status():
+                self.logger.warning("Ollama health check failed - service not responsive")
+                return
+            
+            # Get current statistics
+            stats = self.ollama_client.get_statistics()
+            
+            # Log health metrics
+            self.logger.info(f"Health Check - Success Rate: {stats['success_rate']:.1f}%, "
+                           f"Timeout Rate: {stats['timeout_rate']:.1f}%, "
+                           f"Circuit Breaker: {stats['circuit_breaker_status']}, "
+                           f"Consecutive Failures: {stats['consecutive_failures']}")
+            
+            # Check for concerning metrics
+            if stats['timeout_rate'] > 20:  # More than 20% timeouts
+                self.logger.warning(f"High timeout rate detected: {stats['timeout_rate']:.1f}%")
+            
+            if stats['consecutive_failures'] > 3:
+                self.logger.warning(f"High consecutive failures: {stats['consecutive_failures']}")
+            
+            if stats['circuit_breaker_status'] == 'OPEN':
+                self.logger.warning("Circuit breaker is open - initiating recovery procedures")
+                self.initiate_recovery_procedures(stats)
+            
+            self.logger.info("Ollama health check completed")
+            
+        except Exception as e:
+            self.logger.error(f"Health check failed: {e}")
+    
+    def initiate_recovery_procedures(self, stats: Dict):
+        """Initiate automatic recovery procedures when service is degraded"""
+        try:
+            self.logger.info("Starting automatic recovery procedures...")
+            
+            # Step 1: Save current progress (emergency backup)
+            self.logger.info("Creating emergency backup...")
+            self.save_progress()
+            
+            # Step 2: Reset circuit breaker statistics
+            self.logger.info("Resetting circuit breaker statistics...")
+            self.ollama_client.stats["consecutive_failures"] = 0
+            
+            # Step 3: Pause processing to allow recovery
+            recovery_wait_time = 60  # Base wait time
+            if stats['timeout_rate'] > 50:  # Very high timeout rate
+                recovery_wait_time = 120
+            elif stats['timeout_rate'] > 30:  # High timeout rate
+                recovery_wait_time = 90
+            
+            self.logger.info(f"Pausing processing for {recovery_wait_time} seconds to allow service recovery...")
+            time.sleep(recovery_wait_time)
+            
+            # Step 4: Test service recovery
+            self.logger.info("Testing service recovery...")
+            if self.ollama_client.check_ollama_status():
+                self.logger.info("Service appears to be recovering - attempting to reset circuit breaker")
+                
+                # Force circuit breaker reset
+                self.ollama_client.circuit_breaker["is_open"] = False
+                self.ollama_client.stats["consecutive_failures"] = 0
+                
+                # Test with a simple request
+                test_question = "What is the capital of India?"
+                test_prompt = self.config["templates"]["subject_only"].format(question=test_question)
+                
+                test_response = self.ollama_client.make_request(test_prompt, max_retries=1, question=test_question)
+                if test_response:
+                    self.logger.info("Recovery test successful - resuming normal operations")
+                else:
+                    self.logger.warning("Recovery test failed - extended recovery period needed")
+                    time.sleep(60)  # Additional wait time
+            else:
+                self.logger.error("Service still not responsive after recovery procedures")
+                
+                # Last resort: attempt restart suggestion
+                self.logger.error("Consider restarting Ollama service manually: 'ollama serve'")
+                
+                # Extended wait for manual intervention
+                self.logger.info("Waiting 300 seconds for manual intervention...")
+                time.sleep(300)
+            
+            self.logger.info("Recovery procedures completed")
+            
+        except Exception as e:
+            self.logger.error(f"Recovery procedures failed: {e}")
+            # Even if recovery fails, save progress
+            try:
+                self.save_progress()
+            except:
+                pass
     
     def print_progress_report(self):
         """Print detailed progress report"""
@@ -243,7 +348,11 @@ class QuestionTagger:
         print(f"Ollama Stats:")
         print(f"  Model: {ollama_stats['current_model']}")
         print(f"  Success Rate: {ollama_stats['success_rate']:.1f}%")
+        print(f"  Timeout Rate: {ollama_stats['timeout_rate']:.1f}%")
+        print(f"  Circuit Breaker: {ollama_stats['circuit_breaker_status']}")
+        print(f"  Consecutive Failures: {ollama_stats['consecutive_failures']}")
         print(f"  Avg Response Time: {ollama_stats['average_response_time']:.2f}s")
+        print(f"  Circuit Breaker Trips: {ollama_stats['circuit_breaker_trips']}")
         print(f"{'='*60}")
     
     def run(self) -> bool:
@@ -312,6 +421,10 @@ class QuestionTagger:
                     # Periodic saving
                     if processed_count > 0 and processed_count % save_interval == 0:
                         self.save_progress()
+                    
+                    # Ollama health check every 50 questions
+                    if processed_count > 0 and processed_count % 50 == 0:
+                        self.perform_ollama_health_check()
                     
                     current_pos += batch_size
                 

@@ -7,17 +7,17 @@ import os
 
 # Ollama Configuration - Using 20B+ model for maximum power
 OLLAMA_CONFIG = {
-    "host": "http://localhost:11434",  # Default Ollama host
-    "model": "gemma2:9b",  # 9B parameter model
-    "timeout": 120,  # 2 minutes timeout for 8B model
+    "host": "http://localhost:11434",  # Local Ollama server 
+    "model": "llama3.1:8b",  # Fast 8B model - much better performance
+    "timeout": 60,  # 1 minute timeout - should be plenty for 8B model
     "temperature": 0.02,  # Ultra-low temperature for maximum consistency
     "top_p": 0.7,  # More focused responses
-    "max_retries": 2,  # Fewer retries due to long processing time
-    "retry_delay": 5  # seconds - longer delay for massive model
+    "max_retries": 3,  # Standard retries for 8B model
+    "retry_delay": 3  # seconds - shorter delay for faster model
 }
 
 # Alternative models to try if primary fails (in order of preference)
-FALLBACK_MODELS = ["llama3.1:8b", "llama3:latest", "mistral:7b"]
+FALLBACK_MODELS = ["llama3:latest", "mistral:7b", "llama3.2:1b"]
 
 # File Paths - Clear 3-folder structure with pre-initialized taxonomy
 PATHS = {

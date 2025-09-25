@@ -332,8 +332,12 @@ class QuestionProcessor:
         try:
             output_file = self.paths["output_file"]
             if backup:
+                # Save backup files in results folder with better naming
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                output_file = output_file.replace(".xlsx", f"_backup_{timestamp}.xlsx")
+                processed_count = self.progress["processed_questions"]
+                results_dir = os.path.dirname(self.paths["output_file"])
+                backup_filename = f"questions_tagged_backup_{timestamp}_q{processed_count}.xlsx"
+                output_file = os.path.join(results_dir, backup_filename)
             
             # Ensure output directory exists
             os.makedirs(os.path.dirname(output_file), exist_ok=True)
