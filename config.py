@@ -8,7 +8,7 @@ import os
 # Ollama Configuration - Using 20B+ model for maximum power
 OLLAMA_CONFIG = {
     "host": "http://localhost:11434",  # Local Ollama server 
-    "model": "llama3.1:8b",  # Fast 8B model - much better performance
+    "model": "gemma2:9b",  # Fast 8B model - much better performance
     "timeout": 60,  # 1 minute timeout - should be plenty for 8B model
     "temperature": 0.02,  # Ultra-low temperature for maximum consistency
     "top_p": 0.7,  # More focused responses
@@ -19,32 +19,86 @@ OLLAMA_CONFIG = {
 # Alternative models to try if primary fails (in order of preference)
 FALLBACK_MODELS = ["llama3:latest", "mistral:7b", "llama3.2:1b"]
 
-# File Paths - Clear 3-folder structure with pre-initialized taxonomy
+# OpenAI Configuration - GPT-4o mini for cost-effective classification
+OPENAI_CONFIG = {
+    "api_key": None,  # Will be loaded from environment variable OPENAI_API_KEY
+    "model": "gpt-4o-mini",  # Cost-effective model for classification
+    "max_tokens": 500,  # Increased to allow detailed reasoning before classification
+    "temperature": 0.02,  # Ultra-low temperature for consistency
+    "timeout": 30,  # 30 second timeout
+    "max_retries": 3,  # Retry on failures
+    "retry_delay": 2,  # Delay between retries in seconds
+    "requests_per_minute": 100,  # Rate limiting
+    "tokens_per_minute": 100000,  # Token rate limiting
+    "budget_limit_usd": 10.0,  # Budget limit in USD
+    "enable_cost_tracking": True,  # Track costs and usage
+    "fallback_to_ollama": True  # Fallback to Ollama on failure/budget exceeded
+}
+
+# Provider Configuration - Controls which AI provider to use
+PROVIDER_CONFIG = {
+    "primary_provider": "openai",  # "openai" or "ollama" 
+    "auto_fallback": True,  # Automatically fallback to secondary provider
+    "fallback_provider": "ollama",  # Secondary provider
+    "cost_alert_threshold": 0.8,  # Alert when 80% of budget used
+    "prefer_cost_efficiency": True,  # Prefer lower cost options when possible
+    "max_cost_per_question_usd": 0.01  # Maximum cost per question in USD
+}
+
+# Rule-Based Classification Configuration
+RULE_BASED_CONFIG = {
+    "enabled": True,  # Enable rule-based classification
+    "priority": "before_ai",  # Apply rules before AI classification
+    "log_matches": True,  # Log when rules match
+    "track_savings": True,  # Track cost savings from rule matches
+    "fallback_to_ai": True  # Use AI if no rules match
+}
+
+# File Paths - Organized folder structure
 PATHS = {
-    "input_folder": "input",  # HTML files go here
-    "questions_file": "output/all_questions_combined.xlsx",  # Extracted questions (no subject mapping)  
-    "progress_file": "results/tagging_progress.json",
-    "error_log": "results/tagging_errors.log", 
-    "output_file": "results/questions_tagged.xlsx"  # Final tagged results
-    # REMOVED: taxonomy_file and taxonomy_json - now using constants
+    "input_excel": "input/InputExcel.xlsx",  # Original input Excel file
+    "separated_excel": "output/SeparatedQuestions.xlsx",  # Separated by exam (from separate_by_exam.py)
+    "output_excel": "result/ClassifiedQuestions.xlsx",  # Final classified output
+    "tags_file": "tags/Tags_New.xlsx",  # Exam-specific taxonomy tags
+    "backup_excel": "temp/SeparatedQuestions_backup.xlsx",  # Backup of separated file
+    "progress_file": "temp/classification_progress.json",  # Processing progress state
+    "error_log": "logs/processing_errors.log",  # Error logs
+    "cost_file": "logs/api_costs.json",  # Cost tracking file
+    "result_folder": "result"  # Folder for exam-specific result files
 }
 
-# Processing Configuration - Optimized for 70B model
+# Processing Configuration - Optimized for Excel processing
 PROCESSING_CONFIG = {
-    "batch_size": 1,  # Single question processing for two-stage classification
-    "max_concurrent": 1,  # Only 1 concurrent request for 70B model
-    "save_interval": 10,  # Save very frequently due to slow processing
-    "chunk_size": 500,  # Smaller chunks to manage memory with massive model
-    "resume_enabled": True,
-    "backup_enabled": True
+    "batch_size": 1,  # Single question processing for accurate classification
+    "max_concurrent": 1,  # Sequential processing for consistency
+    "save_interval": 10,  # Save every 10 questions processed
+    "backup_interval": 25,  # Create timestamped backup every 25 questions
+    "resume_enabled": True,  # Can resume from interrupted processing
+    "backup_enabled": True,  # Automatic backup creation
+    "use_question_and_explanation": True,  # Combine Question + Explanation for AI input
+    "validate_before_save": True  # Validate classifications before saving
 }
 
-# Prompt Configuration - Optimized for 70B model
+# Excel Processing Configuration
+EXCEL_CONFIG = {
+    "required_columns": ['Subject', 'Topic', 'Subtopic', 'Questions',
+                        'OptionA', 'OptionB', 'OptionC', 'OptionD', 'OptionE',
+                        'Answer', 'Explanation'],
+    "classification_columns": ['Subject', 'Topic', 'Subtopic'],
+    "input_columns": ['Questions', 'Explanation'],
+    "exam_tabs": ['TNPSC', 'Banking', 'SSC-Railways'],  # Expected tabs in separated Excel
+    "backup_on_start": True,
+    "validate_structure": True,
+    "auto_create_missing_folders": True
+}
+
+# Prompt Configuration - Optimized for Chapter/Topic/Subtopic classification
 PROMPT_CONFIG = {
-    "max_taxonomy_items": 200,  # Even more options for the massive model
-    "include_examples": True,
-    "confidence_threshold": 0.8,  # Very high threshold for 70B model
-    # REMOVED: No fallback classifications - system must work or fail
+    "max_taxonomy_items": 200,  # Maximum items to include in prompts
+    "include_examples": True,  # Include classification examples
+    "confidence_threshold": 0.7,  # Minimum confidence for accepting classifications
+    "use_combined_context": True,  # Use Question + Explanation for better accuracy
+    "include_classification_guide": True  # Include domain-specific classification guidance
 }
 
 # Validation Rules - STRICT MODE ONLY
@@ -54,7 +108,9 @@ VALIDATION_CONFIG = {
     "min_question_length": 10,  # Skip questions shorter than this
     "max_question_length": 2000,  # Truncate questions longer than this
     "skip_empty_questions": True,
-    "reject_invalid_responses": True  # Reject any response not in taxonomy
+    "reject_invalid_responses": True,  # Reject any response not in taxonomy
+    "max_validation_retries": 3,  # Number of retries when validation fails
+    "enhanced_retry_prompts": True  # Add stricter instructions on retries
 }
 
 # Logging Configuration
@@ -76,165 +132,141 @@ PERFORMANCE_CONFIG = {
     "memory_limit_mb": 4096  # 4GB memory limit
 }
 
-# Prompt Templates
-SUBJECT_CLASSIFICATION_PROMPT = """
-You are an educational content classifier. Your task is to classify questions into the correct SUBJECT ONLY.
+# Prompt Templates - Two-Stage Classification Approach
 
-QUESTION TO CLASSIFY (including answer options when available):
-{question}
+# Stage 1: Subject Detection Prompt
+SUBJECT_DETECTION_PROMPT = """
+You are an educational content classifier. Your task is to identify the PRIMARY SUBJECT AREA for this question.
 
-AVAILABLE SUBJECTS (choose exactly one):\n1. ANCIENT HISTORY - Historical events and periods\n2. ART AND CULTURE - Arts, literature, cultural traditions\n3. Aptitude - General topics in this domain\n4. ECONOMY - Economics, finance, mathematics, statistics\n5. ENVIRONMENT - Environmental issues, ecology\n6. English - General topics in this domain\n7. GOVERNANCE - Government, politics, administration\n8. INDIAN PHYSICAL GEOGRAPHY - Physical or socio-economic geography\n9. INDIAN SOCIO-ECONOMIC GEOGRAPHY - Physical or socio-economic geography\n10. INTERNATIONAL BODIES & ORGANISATIONS - General topics in this domain\n11. MEDIEVAL HISTORY - Historical events and periods\n12. MODERN INDIA - General topics in this domain\n13. POLITY - Government, politics, administration\n14. Reasoning - General topics in this domain\n15. SCIENCE AND TECHNOLOGY - Science, technology, innovations\n16. WORLD PHYSICAL GEOGRAPHY - Physical or socio-economic geography\n17. WORLD SOCIO-ECONOMIC GEOGRAPHY - Physical or socio-economic geography\n\nCLASSIFICATION GUIDE:
-- Mathematical/calculation questions → Aptitude
-- Logic/reasoning/pattern questions → Reasoning
-- Business/Financial/Economic policy questions → ECONOMY
-- Physical world features → WORLD PHYSICAL GEOGRAPHY
-- Indian geography → INDIAN PHYSICAL GEOGRAPHY
-- Historical events → ANCIENT HISTORY/MEDIEVAL HISTORY/MODERN INDIA
-- Government/Politics → POLITY
-- Science concepts → SCIENCE AND TECHNOLOGY
-- Use the answer options to understand the question's domain and context
+QUESTION TO CLASSIFY (with explanation when available):
+{combined_context}
+
+AVAILABLE SUBJECTS (choose exactly one):
+{subjects_list}
+
+CLASSIFICATION GUIDE:
+- Physics/Electronics/Electrical/Circuit questions → General Science
+- Mathematics/Calculation/Arithmetic questions → Aptitude  
+- Logic/Reasoning/Pattern/Analogy questions → Reasoning
+- Grammar/Vocabulary/English language → English
+- Historical events/periods/dynasties → ANCIENT HISTORY, MEDIEVAL HISTORY, MODERN INDIA
+- Physical geography/mountains/rivers → WORLD PHYSICAL GEOGRAPHY, INDIAN PHYSICAL GEOGRAPHY
+- Economics/Finance/GDP/Policy → ECONOMY
+- Government/Politics/Constitution → POLITY
+- Arts/Culture/Dance/Music → ART AND CULTURE
+- Environment/Ecology/Pollution → ENVIRONMENT
+- Computer/Software/IT → Computer Awareness
+- Current affairs/Recent events → Current Events
+
+IMPORTANT: 
+1. Focus on the PRIMARY knowledge domain being tested
+2. Use technical terms and concepts to guide classification
+3. Consider BOTH question and explanation content
 
 REQUIRED OUTPUT FORMAT (JSON only):
 {{
     "subject": "EXACT_SUBJECT_NAME",
-    "confidence": 0.85
+    "confidence": 0.85,
+    "reasoning": "Brief explanation of why this subject"
 }}
 
 CRITICAL RULES:
-1. Pick EXACTLY ONE subject from the 14 options above
-2. Use the EXACT subject name as listed
-3. Return ONLY the JSON, no explanations
-4. Consider the primary focus of the question
+1. Pick EXACTLY ONE subject from the list above
+2. Use the EXACT subject name as shown
+3. Return ONLY the JSON, no extra text
+4. Base decision on question content, not answer options
 """
 
-TOPIC_CLASSIFICATION_PROMPT = """
-You are an educational content classifier. You have already determined the SUBJECT is: {subject}
+# Stage 2: Exact Triplet Selection Prompt  
+TRIPLET_SELECTION_PROMPT = """
+You are an educational content classifier. You have identified the subject as: {subject}
 
-Now classify this question into the correct TOPIC within that subject.
+Now you must select the EXACT Chapter > Topic > Subtopic combination from the available options.
 
-QUESTION TO CLASSIFY (including answer options when available):
-{question}
+QUESTION TO CLASSIFY (with explanation when available):
+{combined_context}
 
-AVAILABLE TOPICS for {subject}:
-{topics}
+SUBJECT IDENTIFIED: {subject}
+
+AVAILABLE EXACT TRIPLETS for {subject} (choose exactly one):
+{available_triplets}
+
+CRITICAL INSTRUCTIONS:
+1. You MUST select EXACTLY ONE triplet from the list above
+2. Copy the triplet EXACTLY as shown - do not change any wording
+3. The triplet must match your understanding of the question content
+4. Use both question and explanation to make the best choice
 
 REQUIRED OUTPUT FORMAT (JSON only):
 {{
+    "chapter": "EXACT_CHAPTER_NAME",
     "topic": "EXACT_TOPIC_NAME",
-    "confidence": 0.85
+    "subtopic": "EXACT_SUBTOPIC_NAME", 
+    "full_triplet": "EXACT_FULL_TRIPLET_FROM_LIST",
+    "confidence": 0.85,
+    "reasoning": "Brief explanation of selection"
 }}
 
-CRITICAL RULES:
-1. Pick EXACTLY ONE topic from the options above
-2. Use the EXACT topic name as listed - DO NOT modify spelling or wording
-3. Copy the topic name EXACTLY as shown - including any apparent typos or unusual spelling
-4. Return ONLY the JSON, no explanations
-5. The topic must be from the {subject} subject
-6. DO NOT correct what you think are spelling errors - use the exact text provided
-"""
+WARNING: The triplet must be copied EXACTLY from the available options above. Any deviation will cause validation failure.
 
-SUBTOPIC_CLASSIFICATION_PROMPT = """
-You are an educational content classifier. You have already determined:
-- SUBJECT: {subject}
-- TOPIC: {topic}
-
-Now classify this question into the correct SUBTOPIC within that topic.
-
-QUESTION TO CLASSIFY (including answer options when available):
-{question}
-
-AVAILABLE SUBTOPICS for {subject} > {topic}:
-{subtopics}
-
-REQUIRED OUTPUT FORMAT (JSON only):
-{{
-    "subtopic": "EXACT_SUBTOPIC_NAME",
-    "confidence": 0.85
-}}
-
-CRITICAL RULES:
-1. Pick EXACTLY ONE subtopic from the options above
-2. Use the EXACT subtopic name as listed - DO NOT modify spelling or wording
-3. Copy the subtopic name EXACTLY as shown - including any apparent typos or unusual spelling
-4. Return ONLY the JSON, no explanations
-5. The subtopic must be from the {subject} > {topic} combination
-6. DO NOT correct what you think are spelling errors - use the exact text provided
-
-WARNING: Any response that doesn't match exactly will be rejected."""
-
-BATCH_CLASSIFICATION_PROMPT = """
-You are a strict educational content classifier. You MUST classify ALL questions using ONLY the exact Subject-Topic-Subtopic combinations from the taxonomy. NO other words allowed.
-
-QUESTIONS TO CLASSIFY:
-{questions}
-
-STRICT TAXONOMY - USE ONLY THESE EXACT OPTIONS:
-{taxonomy_options}
-
-CRITICAL RULES FOR ALL QUESTIONS:
-1. You MUST use EXACT Subject, Topic, and Subtopic names from the taxonomy above
-2. You CANNOT create new subjects, topics, or subtopics  
-3. You CANNOT use "MATH", "SCIENCE", "SOCIAL SCIENCE" - these don't exist
-4. Every response MUST match an existing taxonomy path exactly
-5. Pick the closest match from available options
-
-REQUIRED OUTPUT FORMAT (JSON Array only - no extra text):
-[
-    {{
-        "question_id": 1,
-        "subject": "EXACT_SUBJECT_FROM_TAXONOMY",
-        "topic": "EXACT_TOPIC_FROM_TAXONOMY",
-        "subtopic": "EXACT_SUBTOPIC_FROM_TAXONOMY", 
-        "confidence": 0.85
-    }},
-    {{
-        "question_id": 2,
-        "subject": "EXACT_SUBJECT_FROM_TAXONOMY",
-        "topic": "EXACT_TOPIC_FROM_TAXONOMY",
-        "subtopic": "EXACT_SUBTOPIC_FROM_TAXONOMY",
-        "confidence": 0.90
-    }}
-]
-
-WARNING: Any response with taxonomy items NOT in the provided list will be rejected.
-Return ONLY the JSON array. No explanations.
+EXAMPLE:
+If you select "General Science > Physics - Application > Electricity and Magnetism"
+Then: 
+- chapter: "General Science"
+- topic: "Physics - Application"  
+- subtopic: "Electricity and Magnetism"
+- full_triplet: "General Science > Physics - Application > Electricity and Magnetism"
 """
 
 def get_config():
     """Get complete configuration dictionary"""
     return {
         "ollama": OLLAMA_CONFIG,
+        "openai": OPENAI_CONFIG,
+        "provider": PROVIDER_CONFIG,
+        "rule_based": RULE_BASED_CONFIG,
         "fallback_models": FALLBACK_MODELS,
         "paths": PATHS,
         "processing": PROCESSING_CONFIG,
+        "excel": EXCEL_CONFIG,
         "prompt": PROMPT_CONFIG,
         "validation": VALIDATION_CONFIG,
         "logging": LOGGING_CONFIG,
         "performance": PERFORMANCE_CONFIG,
         "templates": {
-            "subject_only": SUBJECT_CLASSIFICATION_PROMPT,
-            "topic_only": TOPIC_CLASSIFICATION_PROMPT,
-            "subtopic_only": SUBTOPIC_CLASSIFICATION_PROMPT,
-            "single": SUBJECT_CLASSIFICATION_PROMPT,  # Use three-stage approach
-            "batch": SUBJECT_CLASSIFICATION_PROMPT   # Use three-stage approach
+            "subject_detection": SUBJECT_DETECTION_PROMPT,  # Stage 1: Subject identification
+            "triplet_selection": TRIPLET_SELECTION_PROMPT,  # Stage 2: Exact triplet selection
+            "two_stage": SUBJECT_DETECTION_PROMPT  # Default to two-stage approach
         }
     }
 
 def validate_config():
-    """Validate configuration settings"""
+    """Validate configuration settings for Excel-based processing"""
     errors = []
     
-    # Check if required directories exist
-    if not os.path.exists(PATHS["input_folder"]):
-        errors.append(f"Input folder not found: {PATHS['input_folder']}")
+    # Check if input Excel files exist (allow either original or separated)
+    has_input = os.path.exists(PATHS["input_excel"])
+    has_separated = os.path.exists(PATHS["separated_excel"])
+
+    if not has_input and not has_separated:
+        errors.append(f"No input Excel file found. Need either:")
+        errors.append(f"  - {PATHS['input_excel']} (original input)")
+        errors.append(f"  - {PATHS['separated_excel']} (separated by exam)")
     
-    # Create output directories if they don't exist
-    os.makedirs(os.path.dirname(PATHS["questions_file"]), exist_ok=True)
-    os.makedirs(os.path.dirname(PATHS["output_file"]), exist_ok=True)
+    # Create required directories if they don't exist
+    required_dirs = ["temp", "logs", "output", "result", "tags", "input"]
+    for dir_name in required_dirs:
+        os.makedirs(dir_name, exist_ok=True)
+
+    # Also create parent directories for all path entries
+    for path_key in ["output_excel", "backup_excel", "progress_file", "error_log", "cost_file"]:
+        dir_path = os.path.dirname(PATHS[path_key])
+        if dir_path:
+            os.makedirs(dir_path, exist_ok=True)
     
     # Validate batch size
-    if PROCESSING_CONFIG["batch_size"] < 1 or PROCESSING_CONFIG["batch_size"] > 20:
-        errors.append("Batch size should be between 1 and 20")
+    if PROCESSING_CONFIG["batch_size"] < 1 or PROCESSING_CONFIG["batch_size"] > 10:
+        errors.append("Batch size should be between 1 and 10 for Excel processing")
     
     # Validate confidence threshold
     if not 0 <= PROMPT_CONFIG["confidence_threshold"] <= 1:
@@ -244,12 +276,18 @@ def validate_config():
     if not OLLAMA_CONFIG["host"].startswith("http"):
         errors.append("Ollama host should start with http:// or https://")
     
+    # Validate Excel configuration
+    if len(EXCEL_CONFIG["required_columns"]) < 10:
+        errors.append("Excel configuration missing required columns")
+    
     # Validate taxonomy constants are available
     try:
-        from taxonomy_constants import get_taxonomy_metadata
-        metadata = get_taxonomy_metadata()
-        if not metadata.get("all_paths"):
-            errors.append("Taxonomy constants are empty or invalid")
+        from taxonomy_constants import get_taxonomy_for_exam, TAXONOMY_STATS
+        # Check each exam type has taxonomy
+        for exam_type in EXCEL_CONFIG.get("exam_tabs", ["TNPSC", "Banking", "SSC-Railways"]):
+            taxonomy = get_taxonomy_for_exam(exam_type)
+            if not taxonomy:
+                errors.append(f"Taxonomy not found for exam: {exam_type}")
     except ImportError:
         errors.append("Taxonomy constants module not found")
     except Exception as e:
@@ -267,8 +305,12 @@ if __name__ == "__main__":
     else:
         print("✅ Configuration is valid!")
         
-    print(f"\nConfiguration Summary:")
+    print(f"\nExcel Processing Configuration Summary:")
     print(f"  Model: {OLLAMA_CONFIG['model']}")
+    print(f"  Input Excel: {PATHS['input_excel']}")
     print(f"  Batch Size: {PROCESSING_CONFIG['batch_size']}")
-    print(f"  Max Concurrent: {PROCESSING_CONFIG['max_concurrent']}")
+    print(f"  Save Interval: {PROCESSING_CONFIG['save_interval']}")
     print(f"  Confidence Threshold: {PROMPT_CONFIG['confidence_threshold']}")
+    print(f"  Use Question + Explanation: {PROCESSING_CONFIG['use_question_and_explanation']}")
+    print(f"  Required Columns: {len(EXCEL_CONFIG['required_columns'])}")
+    print(f"  Classification Columns: {EXCEL_CONFIG['classification_columns']}")
