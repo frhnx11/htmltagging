@@ -247,11 +247,19 @@ def validate_config():
     # Check if input Excel files exist (allow either original or separated)
     has_input = os.path.exists(PATHS["input_excel"])
     has_separated = os.path.exists(PATHS["separated_excel"])
+    
+    # Also check for any Excel files in the input and output folders
+    import glob
+    input_folder_files = glob.glob("input/*.xlsx")
+    output_folder_files = glob.glob("output/*.xlsx")
+    
+    has_any_input = has_input or bool(input_folder_files)
+    has_any_separated = has_separated or bool(output_folder_files)
 
-    if not has_input and not has_separated:
-        errors.append(f"No input Excel file found. Need either:")
-        errors.append(f"  - {PATHS['input_excel']} (original input)")
-        errors.append(f"  - {PATHS['separated_excel']} (separated by exam)")
+    if not has_any_input and not has_any_separated:
+        errors.append(f"No Excel files found. Need either:")
+        errors.append(f"  - Excel files in input/ folder")
+        errors.append(f"  - Excel files in output/ folder")
     
     # Create required directories if they don't exist
     required_dirs = ["temp", "logs", "output", "result", "tags", "input"]

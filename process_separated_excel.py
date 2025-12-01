@@ -123,10 +123,20 @@ class SeparatedExcelProcessor:
         try:
             # Initialize Excel processor
             self.logger.info("Initializing Excel processor...")
-            input_file = self.config["paths"]["separated_excel"]
+            
+            # Find the single Excel file in output folder
+            import os, glob
+            output_folder = os.path.dirname(self.config["paths"]["separated_excel"])
+            excel_files = glob.glob(os.path.join(output_folder, "*.xlsx"))
+            
+            if not excel_files:
+                self.logger.error(f"No Excel files found in {output_folder}")
+                return False
+            
+            input_file = excel_files[0]  # Use the single Excel file
+            self.logger.info(f"Found separated file: {os.path.basename(input_file)}")
             
             # Generate dynamic output filename based on input file
-            import os
             dynamic_filename = generate_result_filename(os.path.basename(input_file))
             output_file = os.path.join(self.config["paths"]["result_folder"], dynamic_filename)
             
