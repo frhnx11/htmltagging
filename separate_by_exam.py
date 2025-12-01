@@ -17,6 +17,7 @@ import logging
 import argparse
 from datetime import datetime
 from typing import Tuple, Dict
+from file_name_utils import generate_output_filename
 
 # Ensure logs directory exists before setting up logging
 os.makedirs('logs', exist_ok=True)
@@ -312,7 +313,6 @@ def main():
 
     # Create separator instance with custom paths if provided
     input_file = args.input if args.input else "input/InputExcel.xlsx"
-    output_file = args.output if args.output else "output/SeparatedQuestions.xlsx"
     
     # Check if we have a batch file in input folder
     if not args.input:
@@ -323,6 +323,15 @@ def main():
             batch_files.sort()
             input_file = batch_files[-1]
             print(f"📁 Using batch file: {input_file}")
+    
+    # Generate dynamic output filename based on input file
+    if not args.output:
+        # Extract output filename from input filename
+        dynamic_output = generate_output_filename(input_file)
+        output_file = f"output/{dynamic_output}"
+        print(f"📄 Generated output filename: {dynamic_output}")
+    else:
+        output_file = args.output
     
     separator = ExamSeparator(input_file, output_file)
 

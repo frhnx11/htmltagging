@@ -25,6 +25,7 @@ from config import get_config, validate_config
 from multi_tab_excel_processor import MultiTabExcelProcessor
 from exam_specific_classifier import create_exam_classifier
 from cost_tracker import CostTracker
+from file_name_utils import generate_result_filename
 
 # Try to import Ollama client
 try:
@@ -123,7 +124,13 @@ class SeparatedExcelProcessor:
             # Initialize Excel processor
             self.logger.info("Initializing Excel processor...")
             input_file = self.config["paths"]["separated_excel"]
-            output_file = self.config["paths"]["output_excel"]
+            
+            # Generate dynamic output filename based on input file
+            import os
+            dynamic_filename = generate_result_filename(os.path.basename(input_file))
+            output_file = os.path.join(self.config["paths"]["result_folder"], dynamic_filename)
+            
+            self.logger.info(f"Using dynamic result filename: {dynamic_filename}")
 
             self.excel_processor = MultiTabExcelProcessor(input_file, output_file)
 
