@@ -58,8 +58,9 @@ class BatchQuestionExtractor:
             'Explanation': 'Explanation'
         }
         
-        # Final output columns (no S No!)
+        # Final output columns with Row No traceability
         self.output_columns = [
+            'Row No',       # NEW - tracks original CSV row number
             'Subject',      # Empty - to be filled by AI
             'Topic',        # Empty - to be filled by AI
             'Subtopic',     # Empty - to be filled by AI
@@ -202,20 +203,28 @@ class BatchQuestionExtractor:
             logger.error(f"Error extracting batch: {e}")
             raise
 
-    def convert_to_excel_format(self, df: pd.DataFrame) -> pd.DataFrame:
+    def convert_to_excel_format(self, df: pd.DataFrame, start_row: int) -> pd.DataFrame:
         """
-        Convert the extracted CSV data to required Excel format
+        Convert the extracted CSV data to required Excel format with Row No tracking
 
         Args:
             df: DataFrame with extracted CSV data
+            start_row: Starting row number from original CSV
 
         Returns:
-            DataFrame in Excel format
+            DataFrame in Excel format with Row No traceability
         """
         logger.info("Converting to Excel format...")
         
         # Create new DataFrame with required columns
         excel_df = pd.DataFrame()
+        
+        # Add Row No column (tracks original CSV row numbers)
+        # CSV header is row 1, data starts at row 2
+        # So start_row=1 corresponds to CSV row 2, start_row=2 to CSV row 3, etc.
+        csv_row_numbers = list(range(start_row, start_row + len(df)))
+        excel_df['Row No'] = csv_row_numbers
+        logger.info(f"Added Row No tracking: {csv_row_numbers[0]} to {csv_row_numbers[-1]}")
         
         # Add empty classification columns
         excel_df['Subject'] = ''
@@ -330,8 +339,8 @@ class BatchQuestionExtractor:
         option_e_analysis = self.analyze_option_e(df)
         logger.info(f"OptionE analysis: {option_e_analysis}")
         
-        # Convert to Excel format
-        excel_df = self.convert_to_excel_format(df)
+        # Convert to Excel format with Row No tracking
+        excel_df = self.convert_to_excel_format(df, start_row)
         
         # Save to Excel
         output_path = self.save_excel_file(excel_df, filename)

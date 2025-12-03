@@ -49,9 +49,9 @@ class ExamSeparator:
         self.input_file = input_file
         self.output_file = output_file
 
-        # Expected columns
+        # Expected columns with Row No for traceability
         self.expected_columns = [
-            'Subject', 'Topic', 'Subtopic', 'Questions',
+            'Row No', 'Subject', 'Topic', 'Subtopic', 'Questions',
             'OptionA', 'OptionB', 'OptionC', 'OptionD', 'OptionE',
             'Answer', 'Explanation'
         ]

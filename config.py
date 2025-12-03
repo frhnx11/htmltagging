@@ -81,7 +81,7 @@ PROCESSING_CONFIG = {
 
 # Excel Processing Configuration
 EXCEL_CONFIG = {
-    "required_columns": ['Subject', 'Topic', 'Subtopic', 'Questions',
+    "required_columns": ['Row No', 'Subject', 'Topic', 'Subtopic', 'Questions',
                         'OptionA', 'OptionB', 'OptionC', 'OptionD', 'OptionE',
                         'Answer', 'Explanation'],
     "classification_columns": ['Subject', 'Topic', 'Subtopic'],

@@ -50,9 +50,9 @@ class MultiTabExcelProcessor:
         self.tabs = {}  # {tab_name: DataFrame}
         self.original_tabs = {}  # Backup
 
-        # Expected columns
+        # Expected columns with Row No for traceability
         self.required_columns = [
-            'Subject', 'Topic', 'Subtopic', 'Questions',
+            'Row No', 'Subject', 'Topic', 'Subtopic', 'Questions',
             'OptionA', 'OptionB', 'OptionC', 'OptionD', 'OptionE',
             'Answer', 'Explanation'
         ]
